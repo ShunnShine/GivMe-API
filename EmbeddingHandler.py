@@ -4,7 +4,7 @@ from sklearn.cluster import KMeans
 #Fill the embedding dictionary.
 glove_embedding = {}
 for i in range(4):
-     with open(f"Glove300dEmbeddings/words{1+i*25000}_{(i+1)*25000}.txt", "r", encoding='utf-8') as read:
+     with open(f"./Glove300dEmbeddings/words{1+i*25000}_{(i+1)*25000}.txt", "r", encoding='utf-8') as read:
           for line in read:
                arr = line.split()
                glove_embedding[arr[0]] = np.array(list(map(lambda x: float(x), arr[1:])))
