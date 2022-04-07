@@ -49,34 +49,54 @@ def options():
 def Graphing_Request():
     request_info = request.json
     algorithm_type = request_info[0]
+
     if algorithm_type == 'PCA':
         labels_list, cant_find_words, projected_embedding, eigen_values_sum3D, eigen_values_sum2D = eh.PCA(request_info[1])
         color_options = ["#00188f", "#009e49", "#00bcf2", "#ff8c00", "#e81123"]
+    
+        clusters = []
+        for i in range(2, 6):
+            try:
+                clusters.append(eh.k_means_clus(projected_embedding, i))
+            except Exception:
+                break
 
-    clusters = []
-    for i in range(2, 6):
-        try:
-            clusters.append(eh.k_means_clus(projected_embedding, i))
-        except Exception:
-            break
+        c_colors = [list(map(lambda x: color_options[x], cluster)) for cluster in clusters]
 
-    c_colors = [list(map(lambda x: color_options[x], cluster)) for cluster in clusters]
-
-    x_coords = list(projected_embedding[:,0])
-    y_coords = list(projected_embedding[:,1])
-    z_coords = list(projected_embedding[:,2]) # if dimensions_input == "3" else []
-    response = jsonify(
-        x_points = x_coords,
-        y_points = y_coords,
-        z_points = z_coords,
-        labels = labels_list,
-        removed = cant_find_words,
-        colors = c_colors,
-        info_represented = [eigen_values_sum2D, eigen_values_sum3D]
-        )
+        x_coords = list(projected_embedding[:,0])
+        y_coords = list(projected_embedding[:,1])
+        z_coords = list(projected_embedding[:,2]) # if dimensions_input == "3" else []
+        response = jsonify(
+            x_points = x_coords,
+            y_points = y_coords,
+            z_points = z_coords,
+            labels = labels_list,
+            removed = cant_find_words,
+            colors = c_colors,
+            info_represented = [eigen_values_sum2D, eigen_values_sum3D]
+            )
     if algorithm_type == '2M':
-        eh.Two_Means(request_info[1],request_info[2])
+        list1_found_words_vocab, list2_found_words_vocab, cant_find_words, projected_embedding, x_values, eigen_values_sum3D, eigen_values_sum2D = eh.Two_Means(request_info[1],request_info[2])
+        
+        color_options = ["#00188f", "#009e49", "#00bcf2", "#ff8c00", "#e81123"]
+    
+        clusters = []
 
+
+        c_colors = ["#00188f"]*len(list1_found_words_vocab) + ["#009e49"]*len(list2_found_words_vocab)
+        
+        x_coords = list(x_values)
+        y_coords = list(projected_embedding[:,0])
+        z_coords = list(projected_embedding[:,1]) # if dimensions_input == "3" else []
+        response = jsonify(
+            x_points = x_coords,
+            y_points = y_coords,
+            z_points = z_coords,
+            labels = list1_found_words_vocab + list2_found_words_vocab,
+            removed = cant_find_words,
+            colors = c_colors,
+            info_represented = [eigen_values_sum2D, eigen_values_sum3D]
+            )
     
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
