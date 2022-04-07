@@ -1,29 +1,21 @@
-import mxnet as mx
 import gluonnlp as nlp
 import numpy as np
 import os
 from sklearn.cluster import KMeans
+
+#Fill the embedding dictionary.
+glove_embedding = {}
+for i in range(4):
+     with open(f"Glove300dEmbeddings/words{1+i*25000}_{(i+1)*25000}.txt", "r", encoding='utf-8') as read:
+          for line in read:
+               arr = line.split()
+               glove_embedding[arr[0]] = np.array(list(map(lambda x: float(x), arr[1:])))
 
 # Built with help from: 
 # Principal Component Analysis with NumPy
 # An article written by Wendy Navarrete
 # https://towardsdatascience.com/pca-with-numpy-58917c1d0391
 
-###########################
-# Load/Read Word Embedding
-###########################
-def loadDataVocab(embedType, preTrainFile):
-
-     fasttext_2M300d = nlp.embedding.create(embedType, source=preTrainFile)
-
-     # create vocabulary by using all the tokens
-     vocab = nlp.Vocab(nlp.data.Counter(fasttext_2M300d.idx_to_token))
-     vocab.set_embedding(fasttext_2M300d)
-     #len(vocab.idx_to_token)
-     count_tok = nlp.data.Counter(fasttext_2M300d.idx_to_token)
-     wordsVocab = [x[0] for x in count_tok.most_common()]
-
-     return vocab, wordsVocab[1:]
 
 def standardize_data(arr):
          
@@ -54,17 +46,16 @@ def standardize_data(arr):
     return standardizedArray
 
 
-def import_word_list(word_list, wordVocab, wordEmbedding):
+def import_word_list(word_list):
      word_list_embedding = []
      cant_find = []
      found = []
      for word in word_list:
           word = word.lower()
-          try:
-               i = wordVocab.index(word)
-               word_list_embedding.append(list(wordEmbedding[i]))
+          if word in glove_embedding:
+               word_list_embedding.append(glove_embedding[word])
                found.append(word)
-          except ValueError:
+          else:
                cant_find.append(word)
      return found, cant_find, np.array(word_list_embedding, np.float32)
 
@@ -73,13 +64,8 @@ def k_means_clus(wordEmbedding, num_of_clus):
                
 
 def PCA(list_of_words):
-     embedType, preTrainFile = "glove", "glove.6B.300d"
-     vocab, all_wordsVocab = loadDataVocab(embedType, preTrainFile)
 
-     all_wordsVocab  = all_wordsVocab[:100000]
-     all_WordEmbedding = vocab.embedding[all_wordsVocab].asnumpy()
-
-     found_words_vocab, cant_find_words, wordlist_Embedding = import_word_list(list_of_words, all_wordsVocab, all_WordEmbedding)
+     found_words_vocab, cant_find_words, wordlist_Embedding = import_word_list(list_of_words)
      # standardized it
      wordlist_Embedding = standardize_data(wordlist_Embedding)
 
@@ -106,14 +92,8 @@ def PCA(list_of_words):
      return found_words_vocab, cant_find_words, projected_words.real, sum(variance_explained[:3]), sum(variance_explained[:2])
 
 def Two_Means(word_list1, word_list2):
-     embedType, preTrainFile = "glove", "glove.6B.300d"
-     vocab, all_wordsVocab = loadDataVocab(embedType, preTrainFile)
-
-     embedding_Vocab  = all_wordsVocab[:100000]
-     embedding_vectors = vocab.embedding[all_wordsVocab].asnumpy()
-
-     list1_found_words_vocab, cant_find_words, list1_Embedding = import_word_list(word_list1, embedding_Vocab, embedding_vectors)
-     list2_found_words_vocab, cant_find_words_temp, list2_Embedding = import_word_list(word_list2, embedding_Vocab, embedding_vectors)
+     list1_found_words_vocab, cant_find_words, list1_Embedding = import_word_list(word_list1)
+     list2_found_words_vocab, cant_find_words_temp, list2_Embedding = import_word_list(word_list2)
 
      cant_find_words += cant_find_words_temp
 
