@@ -1,4 +1,3 @@
-import re
 from flask import Flask, jsonify, request
 import EmbeddingHandler as eh
 import os

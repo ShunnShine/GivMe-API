@@ -1,6 +1,4 @@
-import gluonnlp as nlp
 import numpy as np
-import os
 from sklearn.cluster import KMeans
 
 #Fill the embedding dictionary.
